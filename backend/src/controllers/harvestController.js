@@ -104,6 +104,8 @@ export async function createEntry(req, res) {
     quantityKg,
     permitNumber,
     location,
+    gpsLat: gpsLat ?? null,
+    gpsLng: gpsLng ?? null,
     notes: null,
   });
 

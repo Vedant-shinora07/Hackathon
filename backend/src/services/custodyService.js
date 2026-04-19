@@ -48,13 +48,15 @@ function makeSignature(userId, batchId, eventType, timestamp) {
 export async function recordCustodyEvent(userId, eventPayload) {
   const timestamp = Date.now();
 
-  // 1. Compute the digital signature.
-  const signature = makeSignature(
-    userId,
-    eventPayload.batchId,
-    eventPayload.eventType,
-    timestamp,
-  );
+  // 1. Compute the digital signature (GPS included when present).
+  const gpsStr = eventPayload.gpsLat
+    ? `${eventPayload.gpsLat},${eventPayload.gpsLng}`
+    : 'no-gps';
+
+  const signature = crypto
+    .createHash('sha256')
+    .update(`${userId}:${eventPayload.batchId}:${eventPayload.eventType}:${timestamp}:${gpsStr}:${process.env.JWT_SECRET}`)
+    .digest('hex');
 
   // 2. Append the block to the chain.
   const result = await addBlock(eventPayload.batchId, {
@@ -63,6 +65,8 @@ export async function recordCustodyEvent(userId, eventPayload) {
     quantityKg: eventPayload.quantityKg,
     permitNumber: eventPayload.permitNumber ?? null,
     location: eventPayload.location ?? null,
+    gpsLat: eventPayload.gpsLat ?? null,
+    gpsLng: eventPayload.gpsLng ?? null,
     notes: eventPayload.notes ?? null,
   });
 

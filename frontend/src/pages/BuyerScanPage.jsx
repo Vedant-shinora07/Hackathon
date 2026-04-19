@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { getProvenance } from '../api';
+import { getProvenance, getJourney } from '../api';
 import { useAuth } from '../context/AuthContext';
 import QRScanner from '../components/QRScanner';
 import CustodyTimeline from '../components/CustodyTimeline';
 import StatusBadge from '../components/StatusBadge';
 import PermitBadge from '../components/PermitBadge';
+import JourneyMap from '../components/JourneyMap';
 
 export default function BuyerScanPage() {
   const { t, i18n } = useTranslation();
@@ -17,14 +18,23 @@ export default function BuyerScanPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [journeyData, setJourneyData] = useState(null);
 
   const fetchProv = async (id) => {
     setLoading(true);
     setError(null);
+    setJourneyData(null);
     try {
       const res = await getProvenance(id);
       if (!res.batchData) throw new Error('Not found');
       setData(res);
+      // Also fetch journey data
+      try {
+        const journeyRes = await getJourney(id);
+        setJourneyData(journeyRes.data);
+      } catch (e) {
+        console.error('Journey fetch error:', e);
+      }
     } catch (e) {
       setError('Batch not found or error loading provenance');
       setData(null);
@@ -165,6 +175,15 @@ export default function BuyerScanPage() {
               </svg>
               Scan another
             </button>
+
+            {/* Journey Map — most impressive visual for end buyer */}
+            {journeyData?.points?.length > 0 && (
+              <JourneyMap
+                points={journeyData.points}
+                totalDistanceKm={journeyData.totalDistanceKm}
+                productType={journeyData.productType}
+              />
+            )}
 
             {/* Product Summary */}
             <div className="bg-white rounded-xl border border-[#D3D1C7] p-6">

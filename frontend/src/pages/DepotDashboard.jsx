@@ -4,6 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { receiveShipment, dispatchShipment, getDepotFlags } from '../api';
 import VolumeFlagAlert from '../components/VolumeFlagAlert';
 import ConfirmModal from '../components/ConfirmModal';
+import GpsButton from '../components/GpsButton';
+import Swal from 'sweetalert2';
+import { reverseGeocode } from '../utils/geocode';
 
 export default function DepotDashboard() {
   const { t } = useTranslation();
@@ -15,6 +18,13 @@ export default function DepotDashboard() {
 
   const receiveForm = useForm();
   const dispatchForm = useForm();
+  const [receiveGpsCaptured, setReceiveGpsCaptured] = useState(false);
+  const [dispatchGpsCaptured, setDispatchGpsCaptured] = useState(false);
+
+  const rWatchLat = receiveForm.watch('gpsLat');
+  const rWatchLng = receiveForm.watch('gpsLng');
+  const dWatchLat = dispatchForm.watch('gpsLat');
+  const dWatchLng = dispatchForm.watch('gpsLng');
 
   const loadFlags = async () => {
     try {
@@ -30,10 +40,10 @@ export default function DepotDashboard() {
   const onReceive = async (data) => {
     try {
       await receiveShipment(data);
-      alert('Received');
+      Swal.fire({ title: 'Success', text: 'Received', icon: 'success', confirmButtonColor: '#17502E' });
       receiveForm.reset();
     } catch (e) {
-      alert(t('common.error') + ': ' + (e.response?.data?.error || e.response?.data?.errors?.[0]?.msg || e.message));
+      Swal.fire({ title: 'Error', text: t('common.error') + ': ' + (e.response?.data?.error || e.response?.data?.errors?.[0]?.msg || e.message), icon: 'error', confirmButtonColor: '#17502E' });
       console.error(e.response || e);
     }
   };
@@ -41,7 +51,7 @@ export default function DepotDashboard() {
   const onDispatch = async (data) => {
     try {
       await dispatchShipment(data);
-      alert('Dispatched');
+      Swal.fire({ title: 'Success', text: 'Dispatched', icon: 'success', confirmButtonColor: '#17502E' });
       dispatchForm.reset();
       setAnomaly(null);
     } catch (e) {
@@ -49,7 +59,7 @@ export default function DepotDashboard() {
         setAnomaly(e.response.data);
         setPendingDispatchData(data);
       } else {
-        alert(t('common.error') + ': ' + (e.response?.data?.error || e.response?.data?.errors?.[0]?.msg || e.message));
+        Swal.fire({ title: 'Error', text: t('common.error') + ': ' + (e.response?.data?.error || e.response?.data?.errors?.[0]?.msg || e.message), icon: 'error', confirmButtonColor: '#17502E' });
         console.error(e.response || e);
       }
     }
@@ -58,12 +68,12 @@ export default function DepotDashboard() {
   const handleForceDispatch = async () => {
     try {
       await dispatchShipment({ ...pendingDispatchData, force: true });
-      alert('Force Dispatched');
+      Swal.fire({ title: 'Warning', text: 'Force Dispatched', icon: 'warning', confirmButtonColor: '#17502E' });
       dispatchForm.reset();
       setAnomaly(null);
       setShowConfirm(false);
     } catch (e) {
-      alert(t('common.error') + ': ' + (e.response?.data?.error || e.response?.data?.errors?.[0]?.msg || e.message));
+      Swal.fire({ title: 'Error', text: t('common.error') + ': ' + (e.response?.data?.error || e.response?.data?.errors?.[0]?.msg || e.message), icon: 'error', confirmButtonColor: '#17502E' });
       console.error(e.response || e);
     }
   };
@@ -131,6 +141,23 @@ export default function DepotDashboard() {
                   <label className="block text-[11px] uppercase tracking-widest text-[#888780] font-bold mb-1.5">{t('depot.location')}</label>
                   <input type="text" placeholder="Storage Zone A" {...receiveForm.register('location')} className="w-full border border-[#D3D1C7] rounded-lg px-4 py-2.5 text-[14px] text-[#444441] focus:outline-none focus:ring-2 focus:ring-[#0F6E56] focus:border-transparent transition-all placeholder:text-[#D3D1C7]" />
                 </div>
+                <div>
+                  <label className="block text-[11px] uppercase tracking-widest text-[#888780] font-bold mb-1.5">GPS Coordinates</label>
+                  <input type="hidden" {...receiveForm.register('gpsLat')} />
+                  <input type="hidden" {...receiveForm.register('gpsLng')} />
+                  <GpsButton
+                    onCapture={async (lat, lng) => {
+                      receiveForm.setValue('gpsLat', lat);
+                      receiveForm.setValue('gpsLng', lng);
+                      setReceiveGpsCaptured(true);
+                      const loc = await reverseGeocode(lat, lng);
+                      if (loc) receiveForm.setValue('location', loc);
+                    }}
+                    captured={receiveGpsCaptured}
+                    capturedLat={rWatchLat}
+                    capturedLng={rWatchLng}
+                  />
+                </div>
                 <button type="submit" className="w-full bg-[#0F6E56] hover:bg-[#085041] text-white rounded-lg px-4 py-3 text-[14px] font-semibold transition-colors mt-2 shadow-sm">
                   {t('depot.submit')}
                 </button>
@@ -165,6 +192,23 @@ export default function DepotDashboard() {
                 <div>
                   <label className="block text-[11px] uppercase tracking-widest text-[#888780] font-bold mb-1.5">{t('depot.location')}</label>
                   <input type="text" placeholder="Transit Hub B" {...dispatchForm.register('location')} className="w-full border border-[#D3D1C7] rounded-lg px-4 py-2.5 text-[14px] text-[#444441] focus:outline-none focus:ring-2 focus:ring-[#0F6E56] focus:border-transparent transition-all placeholder:text-[#D3D1C7]" />
+                </div>
+                <div>
+                  <label className="block text-[11px] uppercase tracking-widest text-[#888780] font-bold mb-1.5">GPS Coordinates</label>
+                  <input type="hidden" {...dispatchForm.register('gpsLat')} />
+                  <input type="hidden" {...dispatchForm.register('gpsLng')} />
+                  <GpsButton
+                    onCapture={async (lat, lng) => {
+                      dispatchForm.setValue('gpsLat', lat);
+                      dispatchForm.setValue('gpsLng', lng);
+                      setDispatchGpsCaptured(true);
+                      const loc = await reverseGeocode(lat, lng);
+                      if (loc) dispatchForm.setValue('location', loc);
+                    }}
+                    captured={dispatchGpsCaptured}
+                    capturedLat={dWatchLat}
+                    capturedLng={dWatchLng}
+                  />
                 </div>
                 <button type="submit" className="w-full bg-[#EF9F27] hover:bg-[#D98A1B] text-white rounded-lg px-4 py-3 text-[14px] font-semibold transition-colors mt-2 shadow-sm">
                   {t('depot.submit')}

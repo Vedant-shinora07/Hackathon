@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { getProvenance, verifyChain } from '../api';
+import { getProvenance, verifyChain, getJourney } from '../api';
 import CustodyTimeline from '../components/CustodyTimeline';
 import VolumeFlagAlert from '../components/VolumeFlagAlert';
 import PermitBadge from '../components/PermitBadge';
 import StatusBadge from '../components/StatusBadge';
+import JourneyMap from '../components/JourneyMap';
+import Swal from 'sweetalert2';
 
 export default function ProvenancePage() {
   const { batchId } = useParams();
@@ -14,6 +16,7 @@ export default function ProvenancePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [verifyResult, setVerifyResult] = useState(null);
+  const [journeyData, setJourneyData] = useState(null);
 
   useEffect(() => {
     i18n.changeLanguage('en');
@@ -27,7 +30,18 @@ export default function ProvenancePage() {
         setLoading(false);
       }
     };
-    if (batchId) fetchProv();
+    const fetchJourney = async () => {
+      try {
+        const res = await getJourney(batchId);
+        setJourneyData(res.data);
+      } catch (e) {
+        console.error('Journey fetch error:', e);
+      }
+    };
+    if (batchId) {
+      fetchProv();
+      fetchJourney();
+    }
   }, [batchId, i18n, t]);
 
   const handleVerify = async () => {
@@ -35,7 +49,7 @@ export default function ProvenancePage() {
       const res = await verifyChain(batchId);
       setVerifyResult(res);
     } catch (e) {
-      alert(t('common.error'));
+      Swal.fire({ title: 'Error', text: t('common.error'), icon: 'error', confirmButtonColor: '#17502E' });
     }
   };
 
@@ -106,6 +120,20 @@ export default function ProvenancePage() {
             </div>
           </div>
         </div>
+
+        {/* Journey Map */}
+        {journeyData && journeyData.points && journeyData.points.length > 0 && (
+          <div className="mb-6">
+            <p className="text-[11px] uppercase tracking-widest text-[#888780] mb-3">
+              {t('provenance.journey_map')}
+            </p>
+            <JourneyMap
+              points={journeyData.points}
+              totalDistanceKm={journeyData.totalDistanceKm}
+              productType={journeyData.productType}
+            />
+          </div>
+        )}
 
         {/* Chain Integrity Card */}
         <div className="bg-white rounded-xl border border-[#D3D1C7] p-6 mb-6">

@@ -21,6 +21,16 @@ const SALT_ROUNDS = 12;
 async function seed() {
   console.log('🌲 VanRakshak — Seeding database...\n');
 
+  console.log('  ── Clearing old data ──');
+  await query('SET FOREIGN_KEY_CHECKS = 0');
+  await query('TRUNCATE TABLE custody_events');
+  await query('TRUNCATE TABLE volume_flags');
+  await query('TRUNCATE TABLE offline_queue');
+  await query('TRUNCATE TABLE product_batches');
+  await query('TRUNCATE TABLE permits');
+  await query('TRUNCATE TABLE users');
+  await query('SET FOREIGN_KEY_CHECKS = 1');
+
   // ── 1. Hash the PIN once (same for all demo users) ────────────────────
   const pinHash = await bcrypt.hash(PIN, SALT_ROUNDS);
 
@@ -116,6 +126,8 @@ async function seed() {
     quantityKg: 120,
     permitNumber: 'PERMIT-GJ-2024-001',
     location: 'Dandeli Forest, Gujarat',
+    gpsLat: 21.5222,
+    gpsLng: 74.2567,
     notes: null,
   });
   console.log(`    ✓ harvested  → blockHash: ${evt1.blockHash.slice(0, 16)}…`);
@@ -127,6 +139,8 @@ async function seed() {
     quantityKg: 120,
     permitNumber: 'PERMIT-GJ-2024-001',
     location: 'Vadodara Depot',
+    gpsLat: 22.3072,
+    gpsLng: 73.1812,
     notes: null,
   });
   console.log(`    ✓ received   → blockHash: ${evt2.blockHash.slice(0, 16)}…`);
@@ -138,6 +152,8 @@ async function seed() {
     quantityKg: 120,
     permitNumber: 'PERMIT-GJ-2024-001',
     location: 'Vadodara Depot',
+    gpsLat: 22.3072,
+    gpsLng: 73.1812,
     notes: null,
   });
   console.log(`    ✓ dispatched → blockHash: ${evt3.blockHash.slice(0, 16)}…`);
@@ -149,6 +165,8 @@ async function seed() {
     quantityKg: 120,
     permitNumber: 'PERMIT-GJ-2024-001',
     location: 'NH48 Highway',
+    gpsLat: 22.8173,
+    gpsLng: 72.9289,
     notes: null,
   });
   console.log(`    ✓ transported → blockHash: ${evt4.blockHash.slice(0, 16)}…`);
@@ -160,6 +178,8 @@ async function seed() {
     quantityKg: 120,
     permitNumber: 'PERMIT-GJ-2024-001',
     location: 'Surat Export Hub',
+    gpsLat: 21.1702,
+    gpsLng: 72.8311,
     notes: null,
   });
   console.log(`    ✓ delivered  → blockHash: ${evt5.blockHash.slice(0, 16)}…`);
@@ -191,6 +211,8 @@ async function seed() {
     quantityKg: 200,
     permitNumber: 'PERMIT-GJ-2024-002',
     location: 'Vansda Forest, Gujarat',
+    gpsLat: 20.9239,
+    gpsLng: 73.4843,
     notes: null,
   });
   console.log(`    ✓ harvested  → blockHash: ${evt6.blockHash.slice(0, 16)}…`);
@@ -202,6 +224,8 @@ async function seed() {
     quantityKg: 200,
     permitNumber: 'PERMIT-GJ-2024-002',
     location: 'Vadodara Depot',
+    gpsLat: 22.3072,
+    gpsLng: 73.1812,
     notes: null,
   });
   console.log(`    ✓ received   → blockHash: ${evt7.blockHash.slice(0, 16)}…`);
@@ -227,6 +251,8 @@ async function seed() {
     quantityKg: 250,
     permitNumber: 'PERMIT-GJ-2024-002',
     location: 'Vadodara Depot',
+    gpsLat: 22.3072,
+    gpsLng: 73.1812,
     notes: 'Force-dispatched despite anomaly. Received: 200kg, dispatching total: 250kg.',
   });
   console.log(`    ✓ ANOMALY_FLAG → blockHash: ${evt8.blockHash.slice(0, 16)}…`);
@@ -238,6 +264,8 @@ async function seed() {
     quantityKg: 250,
     permitNumber: 'PERMIT-GJ-2024-002',
     location: 'Vadodara Depot',
+    gpsLat: 22.3072,
+    gpsLng: 73.1812,
     notes: null,
   });
   console.log(`    ✓ dispatched → blockHash: ${evt9.blockHash.slice(0, 16)}…`);

@@ -49,6 +49,9 @@ app.use((_req, res) => {
 // eslint-disable-next-line no-unused-vars
 app.use((err, _req, res, _next) => {
   console.error('🔥 Unhandled error:', err);
+  if (err.code === 'ER_NO_REFERENCED_ROW_2') {
+    return res.status(400).json({ error: 'Invalid Batch ID. The requested batch does not exist.' });
+  }
   res.status(err.status || 500).json({ error: err.message || 'Internal server error.' });
 });
 

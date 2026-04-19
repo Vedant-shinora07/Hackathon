@@ -39,13 +39,15 @@ export async function receive(req, res) {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { batchId, quantityKg, location } = req.body;
+  const { batchId, quantityKg, location, gpsLat, gpsLng } = req.body;
 
   const custodyResult = await recordCustodyEvent(req.user.userId, {
     batchId,
     eventType: 'received',
     quantityKg,
     location: location ?? null,
+    gpsLat: gpsLat ?? null,
+    gpsLng: gpsLng ?? null,
     notes: null,
   });
 
@@ -73,7 +75,7 @@ export async function dispatch(req, res) {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { batchId, quantityKg, location, force = false } = req.body;
+  const { batchId, quantityKg, location, force = false, gpsLat, gpsLng } = req.body;
 
   // ── Anomaly check ──────────────────────────────────────────────────────
   const anomaly = await checkAndFlagAnomaly(batchId, req.user.userId, quantityKg);
@@ -94,6 +96,8 @@ export async function dispatch(req, res) {
       eventType: 'ANOMALY_FLAG',
       quantityKg,
       location: location ?? null,
+      gpsLat: gpsLat ?? null,
+      gpsLng: gpsLng ?? null,
       notes: `Force-dispatched despite anomaly. Received: ${anomaly.totalReceived}kg, dispatching total: ${anomaly.totalDispatched}kg.`,
     });
   }
@@ -104,6 +108,8 @@ export async function dispatch(req, res) {
     eventType: 'dispatched',
     quantityKg,
     location: location ?? null,
+    gpsLat: gpsLat ?? null,
+    gpsLng: gpsLng ?? null,
     notes: null,
   });
 

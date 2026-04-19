@@ -92,5 +92,18 @@
   "chain.block_hash": "Block Hash",
   "chain.verified": "Verified",
   "chain.tampered": "Tampered",
-  "chain.valid": "Valid"
+  "chain.valid": "Valid",
+  "gps.use_location": "Use My Location",
+  "gps.detecting": "Detecting...",
+  "gps.captured": "Location captured",
+  "gps.recapture": "Re-capture",
+  "gps.error": "Could not get location. Please enable GPS.",
+  "gps.not_supported": "GPS not supported by your browser",
+  "provenance.journey_map": "Journey Map",
+  "provenance.journey_distance": "Total distance",
+  "provenance.journey_points": "checkpoints",
+  "provenance.journey_empty": "No GPS data available for this batch",
+  "map.checkpoint": "Checkpoint",
+  "map.total_distance": "Total distance",
+  "map.km": "km"
 }

@@ -92,5 +92,18 @@
   "chain.block_hash": "બ્લોક હેશ",
   "chain.verified": "ચકાસાયેલ",
   "chain.tampered": "છેડછાડ થયેલ",
-  "chain.valid": "માન્ય"
+  "chain.valid": "માન્ય",
+  "gps.use_location": "મારું સ્થાન વાપરો",
+  "gps.detecting": "શોધી રહ્યું છે...",
+  "gps.captured": "સ્થાન મળ્યું",
+  "gps.recapture": "ફરી શોધો",
+  "gps.error": "સ્થાન મળ્યું નહીં. કૃપા કરીને GPS ચાલુ કરો.",
+  "gps.not_supported": "તમારા બ્રાઉઝરમાં GPS સમર્થિત નથી",
+  "provenance.journey_map": "યાત્રા નકશો",
+  "provenance.journey_distance": "કુલ અંતર",
+  "provenance.journey_points": "ચેકપોઈન્ટ્સ",
+  "provenance.journey_empty": "આ બેચ માટે GPS ડેટા ઉપલબ્ધ નથી",
+  "map.checkpoint": "ચેકપોઈન્ટ",
+  "map.total_distance": "કુલ અંતર",
+  "map.km": "કિમી"
 }

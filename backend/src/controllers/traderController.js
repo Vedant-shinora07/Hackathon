@@ -37,13 +37,15 @@ export async function transport(req, res) {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { batchId, transportDocHash, location, notes } = req.body;
+  const { batchId, transportDocHash, location, notes, gpsLat, gpsLng } = req.body;
 
   const custodyResult = await recordCustodyEvent(req.user.userId, {
     batchId,
     eventType: 'transported',
     quantityKg: 0, // quantity unchanged during transport
     location: location ?? null,
+    gpsLat: gpsLat ?? null,
+    gpsLng: gpsLng ?? null,
     notes: [notes, transportDocHash ? `docHash:${transportDocHash}` : null]
       .filter(Boolean)
       .join(' | ') || null,
@@ -68,19 +70,23 @@ export async function deliver(req, res) {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { batchId, location } = req.body;
+  const { batchId, location, gpsLat, gpsLng } = req.body;
 
   const custodyResult = await recordCustodyEvent(req.user.userId, {
     batchId,
     eventType: 'delivered',
     quantityKg: 0,
     location: location ?? null,
+    gpsLat: gpsLat ?? null,
+    gpsLng: gpsLng ?? null,
     notes: null,
   });
 
   await query(
-    `UPDATE product_batches SET status = 'delivered' WHERE batch_id = ?`,
-    [batchId],
+    `UPDATE product_batches SET status = 'delivered',
+       delivery_lat = ?, delivery_lng = ?
+     WHERE batch_id = ?`,
+    [gpsLat ?? null, gpsLng ?? null, batchId],
   );
 
   res.json({ txHash: custodyResult.txHash, blockHash: custodyResult.blockHash });

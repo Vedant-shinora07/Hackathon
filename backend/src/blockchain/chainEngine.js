@@ -63,6 +63,8 @@ export async function addBlock(batchId, eventData) {
     quantityKg: eventData.quantityKg,
     permitNumber: eventData.permitNumber ?? null,
     location: eventData.location ?? null,
+    gpsLat: eventData.gpsLat ?? null,
+    gpsLng: eventData.gpsLng ?? null,
     notes: eventData.notes ?? null,
     timestamp,
   };
@@ -77,16 +79,18 @@ export async function addBlock(batchId, eventData) {
   // 7. Insert the block as an append-only row.
   const result = await query(
     `INSERT INTO custody_events
-       (batch_id, event_type, actor_user_id, quantity_kg, location, notes,
-        permit_number, block_hash, previous_block_hash, blockchain_tx_hash,
-        payload_json, timestamp)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FROM_UNIXTIME(? / 1000))`,
+       (batch_id, event_type, actor_user_id, quantity_kg, location,
+        gps_lat, gps_lng, notes, permit_number, block_hash,
+        previous_block_hash, blockchain_tx_hash, payload_json, timestamp)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FROM_UNIXTIME(? / 1000))`,
     [
       batchId,
       eventData.eventType,
       eventData.actorUserId,
       eventData.quantityKg,
       eventData.location ?? null,
+      eventData.gpsLat ?? null,
+      eventData.gpsLng ?? null,
       eventData.notes ?? null,
       eventData.permitNumber ?? null,
       blockHash,

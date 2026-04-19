@@ -95,3 +95,6 @@ export const getAdminAudit = async (permitNumber) => {
   const res = await axiosInstance.get(`/admin/audit?permitNumber=${permitNumber}`);
   return res.data;
 };
+
+// Journey
+export { getJourney } from './journey.js';

@@ -4,14 +4,18 @@ import { useTranslation } from 'react-i18next';
 import { createHarvestEntry, getMyBatches, syncOffline } from '../api';
 import { useOfflineQueue } from '../hooks/useOfflineQueue';
 import BatchCard from '../components/BatchCard';
+import GpsButton from '../components/GpsButton';
 import { QRCodeSVG } from 'qrcode.react';
+import Swal from 'sweetalert2';
+import { reverseGeocode } from '../utils/geocode';
 
 export default function HarvesterDashboard() {
   const { t } = useTranslation();
-  const { register, handleSubmit, setValue, reset } = useForm();
+  const { register, handleSubmit, setValue, watch, reset } = useForm();
   const { isOnline, pendingCount, addToQueue } = useOfflineQueue();
   const [batches, setBatches] = useState([]);
   const [qrCodeData, setQrCodeData] = useState(null);
+  const [gpsCaptured, setGpsCaptured] = useState(false);
 
   const loadBatches = async () => {
     if (isOnline) {
@@ -24,21 +28,15 @@ export default function HarvesterDashboard() {
 
   useEffect(() => { loadBatches(); }, [isOnline]);
 
-  const getLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((pos) => {
-        setValue('gpsLat', pos.coords.latitude);
-        setValue('gpsLng', pos.coords.longitude);
-      });
-    }
-  };
+  const watchLat = watch('gpsLat');
+  const watchLng = watch('gpsLng');
 
   const onSubmit = async (data) => {
     const payload = { ...data, isOffline: !isOnline };
     if (!isOnline) {
       addToQueue('harvest_entry', payload);
       reset();
-      alert(t('harvest.queued_offline'));
+      Swal.fire({ title: 'Offline', text: t('harvest.queued_offline'), icon: 'info', confirmButtonColor: '#17502E' });
     } else {
       try {
         const res = await createHarvestEntry(payload);
@@ -46,7 +44,7 @@ export default function HarvesterDashboard() {
         reset();
         loadBatches();
       } catch (e) {
-        alert(t('common.error') + ': ' + (e.response?.data?.error || e.response?.data?.errors?.[0]?.msg || e.message));
+        Swal.fire({ title: 'Error', text: t('common.error') + ': ' + (e.response?.data?.error || e.response?.data?.errors?.[0]?.msg || e.message), icon: 'error', confirmButtonColor: '#17502E' });
         console.error(e.response || e);
       }
     }
@@ -170,23 +168,21 @@ export default function HarvesterDashboard() {
                 </div>
               </div>
 
+              {/* Location (auto-filled by GPS) */}
+              <div>
+                <label className="block text-[11px] uppercase tracking-widest text-[#888780] font-bold mb-1.5">Location Zone</label>
+                <input
+                  type="text"
+                  {...register('location')}
+                  placeholder="e.g. Surat, Gujarat"
+                  className="w-full border border-[#D3D1C7] rounded-lg px-4 py-2.5 text-[14px] text-[#444441] focus:outline-none focus:ring-2 focus:ring-[#0F6E56] focus:border-transparent bg-white placeholder:text-[#D3D1C7]"
+                />
+              </div>
+
               {/* GPS Coordinates */}
               <div>
-                <div className="flex justify-between items-end mb-1.5">
-                  <label className="block text-[11px] uppercase tracking-widest text-[#888780] font-bold">GPS Coordinates</label>
-                  <button
-                    type="button"
-                    onClick={getLocation}
-                    className="text-[12px] font-semibold text-[#0F6E56] hover:text-[#085041] flex items-center gap-1 transition-colors"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    {t('harvest.use_gps')}
-                  </button>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
+                <label className="block text-[11px] uppercase tracking-widest text-[#888780] font-bold mb-1.5">GPS Coordinates</label>
+                <div className="grid grid-cols-2 gap-4 mb-2">
                   <input
                     type="number"
                     step="any"
@@ -202,6 +198,18 @@ export default function HarvesterDashboard() {
                     placeholder="Longitude"
                   />
                 </div>
+                <GpsButton
+                  onCapture={async (lat, lng) => {
+                    setValue('gpsLat', lat);
+                    setValue('gpsLng', lng);
+                    setGpsCaptured(true);
+                    const loc = await reverseGeocode(lat, lng);
+                    if (loc) setValue('location', loc);
+                  }}
+                  captured={gpsCaptured}
+                  capturedLat={watchLat}
+                  capturedLng={watchLng}
+                />
               </div>
 
               {/* Harvest Date */}

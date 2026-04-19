@@ -1,14 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import Swal from 'sweetalert2';
 import { addTransport, deliverBatch, getTraderBatches } from '../api';
 import BatchCard from '../components/BatchCard';
+import GpsButton from '../components/GpsButton';
+import { reverseGeocode } from '../utils/geocode';
 
 export default function TraderDashboard() {
   const { t } = useTranslation();
   const tForm = useForm();
   const dForm = useForm();
   const [batches, setBatches] = useState([]);
+  const [transportGpsCaptured, setTransportGpsCaptured] = useState(false);
+  const [deliverGpsCaptured, setDeliverGpsCaptured] = useState(false);
+
+  const tWatchLat = tForm.watch('gpsLat');
+  const tWatchLng = tForm.watch('gpsLng');
+  const dWatchLat = dForm.watch('gpsLat');
+  const dWatchLng = dForm.watch('gpsLng');
 
   const loadBatches = async () => {
     try { setBatches(await getTraderBatches()); } catch (e) { console.error(e); }
@@ -17,11 +27,11 @@ export default function TraderDashboard() {
   useEffect(() => { loadBatches(); }, []);
 
   const onTransport = async (data) => {
-    try { await addTransport(data); tForm.reset(); loadBatches(); } catch (e) { alert(t('common.error')); }
+    try { await addTransport(data); tForm.reset(); loadBatches(); Swal.fire({ title: 'Success', text: 'Transport details added', icon: 'success', confirmButtonColor: '#17502E' }); } catch (e) { Swal.fire({ title: 'Error', text: t('common.error'), icon: 'error', confirmButtonColor: '#17502E' }); }
   };
 
   const onDeliver = async (data) => {
-    try { await deliverBatch(data); dForm.reset(); loadBatches(); } catch (e) { alert(t('common.error')); }
+    try { await deliverBatch(data); dForm.reset(); loadBatches(); Swal.fire({ title: 'Success', text: 'Batch delivered', icon: 'success', confirmButtonColor: '#17502E' }); } catch (e) { Swal.fire({ title: 'Error', text: t('common.error'), icon: 'error', confirmButtonColor: '#17502E' }); }
   };
 
   // Derive some simple stats from batches
@@ -139,6 +149,23 @@ export default function TraderDashboard() {
                 className="w-full border border-[#D3D1C7] rounded-lg px-4 py-2.5 text-[14px] text-[#444441] focus:outline-none focus:ring-2 focus:ring-[#0F6E56] focus:border-transparent bg-white placeholder:text-[#D3D1C7] resize-none"
               />
             </div>
+            <div>
+              <label className="block text-[11px] uppercase tracking-widest text-[#888780] font-bold mb-1.5">GPS Coordinates</label>
+              <input type="hidden" {...tForm.register('gpsLat')} />
+              <input type="hidden" {...tForm.register('gpsLng')} />
+              <GpsButton
+                onCapture={async (lat, lng) => {
+                  tForm.setValue('gpsLat', lat);
+                  tForm.setValue('gpsLng', lng);
+                  setTransportGpsCaptured(true);
+                  const loc = await reverseGeocode(lat, lng);
+                  if (loc) tForm.setValue('location', loc);
+                }}
+                captured={transportGpsCaptured}
+                capturedLat={tWatchLat}
+                capturedLng={tWatchLng}
+              />
+            </div>
             <button
               type="submit"
               className="w-full bg-[#0F6E56] hover:bg-[#085041] text-white rounded-lg px-4 py-3 text-[14px] font-semibold transition-colors shadow-sm flex items-center justify-center gap-2"
@@ -175,6 +202,23 @@ export default function TraderDashboard() {
                 placeholder="Surat Distribution Hub"
                 {...dForm.register('location')}
                 className="w-full border border-[#D3D1C7] rounded-lg px-4 py-2.5 text-[14px] text-[#444441] focus:outline-none focus:ring-2 focus:ring-[#0F6E56] focus:border-transparent bg-white placeholder:text-[#D3D1C7]"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] uppercase tracking-widest text-[#888780] font-bold mb-1.5">GPS Coordinates</label>
+              <input type="hidden" {...dForm.register('gpsLat')} />
+              <input type="hidden" {...dForm.register('gpsLng')} />
+              <GpsButton
+                onCapture={async (lat, lng) => {
+                  dForm.setValue('gpsLat', lat);
+                  dForm.setValue('gpsLng', lng);
+                  setDeliverGpsCaptured(true);
+                  const loc = await reverseGeocode(lat, lng);
+                  if (loc) dForm.setValue('location', loc);
+                }}
+                captured={deliverGpsCaptured}
+                capturedLat={dWatchLat}
+                capturedLng={dWatchLng}
               />
             </div>
             <div className="mt-auto pt-2">

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { getUsers, createUser, createPermit, getAdminFlags, getAdminAudit } from '../api';
+import Swal from 'sweetalert2';
 
 export default function AdminDashboard() {
   const { t } = useTranslation();
@@ -23,15 +24,15 @@ export default function AdminDashboard() {
   useEffect(() => { loadData(); }, [tab]);
 
   const onAddUser = async (d) => {
-    try { await createUser({...d, secretCode: 'ADMIN_SECRET_HACKATHON'}); userForm.reset(); loadData(); } catch (e) { alert(t('common.error') + ': ' + (e.response?.data?.error || e.response?.data?.errors?.[0]?.msg || e.message)); }
+    try { await createUser({...d, secretCode: 'ADMIN_SECRET_HACKATHON'}); userForm.reset(); loadData(); Swal.fire({ title: 'Success', text: 'User created', icon: 'success', confirmButtonColor: '#17502E' }); } catch (e) { Swal.fire({ title: 'Error', text: t('common.error') + ': ' + (e.response?.data?.error || e.response?.data?.errors?.[0]?.msg || e.message), icon: 'error', confirmButtonColor: '#17502E' }); }
   };
 
   const onRegisterPermit = async (d) => {
-    try { await createPermit(d); permitForm.reset(); alert('Permit created'); } catch (e) { alert(t('common.error') + ': ' + (e.response?.data?.error || e.response?.data?.errors?.[0]?.msg || e.message)); }
+    try { await createPermit(d); permitForm.reset(); Swal.fire({ title: 'Success', text: 'Permit created', icon: 'success', confirmButtonColor: '#17502E' }); } catch (e) { Swal.fire({ title: 'Error', text: t('common.error') + ': ' + (e.response?.data?.error || e.response?.data?.errors?.[0]?.msg || e.message), icon: 'error', confirmButtonColor: '#17502E' }); }
   };
 
   const runAudit = async () => {
-    try { setAuditData(await getAdminAudit(auditPermit)); } catch (e) { alert(t('common.error') + ': ' + (e.response?.data?.error || e.response?.data?.errors?.[0]?.msg || e.message)); }
+    try { setAuditData(await getAdminAudit(auditPermit)); } catch (e) { Swal.fire({ title: 'Error', text: t('common.error') + ': ' + (e.response?.data?.error || e.response?.data?.errors?.[0]?.msg || e.message), icon: 'error', confirmButtonColor: '#17502E' }); }
   };
 
   const getRoleColor = (role) => {
